@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Clock, CheckCircle2, Star, ArrowRight, Trash2 } from 'lucide-react'
+import { Search, Clock, CheckCircle2, ArrowRight, Trash2 } from 'lucide-react'
 import { Decision } from '../types'
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 type Filter = 'all' | 'active' | 'resolved'
-type Sort = 'newest' | 'oldest' | 'process'
+type Sort = 'newest' | 'oldest' | 'success'
 
 export default function DecisionList({ decisions, onView, onDelete }: Props) {
   const [query, setQuery] = useState('')
@@ -27,7 +27,8 @@ export default function DecisionList({ decisions, onView, onDelete }: Props) {
     .sort((a, b) => {
       if (sort === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       if (sort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      return b.processQualityScore - a.processQualityScore
+      const rank = { met: 0, partial: 1, missed: 2, undefined: 3 }
+      return (rank[a.resolution?.successCriteriaResult ?? 'undefined'] ?? 3) - (rank[b.resolution?.successCriteriaResult ?? 'undefined'] ?? 3)
     })
 
   const handleDelete = (id: string) => {
@@ -81,7 +82,7 @@ export default function DecisionList({ decisions, onView, onDelete }: Props) {
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
-          <option value="process">Highest process quality</option>
+          <option value="success">By success criteria</option>
         </select>
       </div>
 
@@ -121,16 +122,6 @@ export default function DecisionList({ decisions, onView, onDelete }: Props) {
                       {new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       {d.updates.length > 0 && ` · ${d.updates.length} update${d.updates.length !== 1 ? 's' : ''}`}
                     </p>
-                  </div>
-
-                  {/* Process quality */}
-                  <div className="hidden md:flex items-center gap-1 flex-shrink-0">
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <Star
-                        key={i}
-                        className={`w-3 h-3 ${i <= d.processQualityScore ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
-                      />
-                    ))}
                   </div>
 
                   {/* Resolution result */}

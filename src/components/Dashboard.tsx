@@ -1,4 +1,4 @@
-import { PlusCircle, Clock, CheckCircle2, TrendingUp, Star, ArrowRight, Calendar } from 'lucide-react'
+import { PlusCircle, Clock, CheckCircle2, TrendingUp, ArrowRight, Calendar, Target } from 'lucide-react'
 import { Decision } from '../types'
 import { brierScore, calibrationGrade } from '../utils/calibration'
 
@@ -27,18 +27,6 @@ function StatCard({ label, value, sub, icon: Icon, color }: {
   )
 }
 
-function ProcessStars({ score }: { score: number }) {
-  return (
-    <span className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => (
-        <Star
-          key={i}
-          className={`w-3 h-3 ${i <= score ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
-        />
-      ))}
-    </span>
-  )
-}
 
 function DecisionCard({ d, onView }: { d: Decision; onView: () => void }) {
   const daysSince = Math.floor(
@@ -74,17 +62,13 @@ function DecisionCard({ d, onView }: { d: Decision; onView: () => void }) {
           {d.description && (
             <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{d.description}</p>
           )}
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-400">Process</span>
-              <ProcessStars score={d.processQualityScore} />
-            </div>
-            {topForecast && (
+          {topForecast && (
+            <div className="mt-2">
               <span className="text-xs text-slate-400">
                 Top forecast: <span className="font-medium text-slate-600">{topForecast.probability}%</span> — {topForecast.description}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className="text-xs text-slate-400">
@@ -102,9 +86,8 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
   const resolved = decisions.filter(d => d.status === 'resolved')
   const score = brierScore(resolved)
   const grade = calibrationGrade(score)
-  const avgProcess = decisions.length
-    ? (decisions.reduce((s, d) => s + d.processQualityScore, 0) / decisions.length).toFixed(1)
-    : '—'
+  const metCount = resolved.filter(d => d.resolution?.successCriteriaResult === 'met').length
+  const successRate = resolved.length ? `${Math.round((metCount / resolved.length) * 100)}%` : '—'
 
   const upcoming = active
     .filter(d => d.deadline)
@@ -151,10 +134,10 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
           color="bg-indigo-50 text-indigo-600"
         />
         <StatCard
-          label="Avg Process"
-          value={avgProcess}
-          sub="out of 5"
-          icon={Star}
+          label="Success Rate"
+          value={successRate}
+          sub={resolved.length ? `${metCount}/${resolved.length} criteria met` : 'no resolved decisions'}
+          icon={Target}
           color="bg-amber-50 text-amber-600"
         />
       </div>
