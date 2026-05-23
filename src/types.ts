@@ -63,6 +63,9 @@ export interface Decision {
   processQualityScore: number   // 1–5 at decision time
   processQualityNotes: string
 
+  // Time spent on the decision process (seconds)
+  durationSeconds?: number
+
   // Follow-up log
   updates: UpdateEntry[]
 

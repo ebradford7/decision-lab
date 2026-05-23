@@ -14,6 +14,15 @@ interface Props {
   onBack: () => void
 }
 
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
 function Section({ title, icon: Icon, children, defaultOpen = true }: {
   title: string; icon: React.ElementType; children: React.ReactNode; defaultOpen?: boolean
 }) {
@@ -160,6 +169,12 @@ export default function DecisionDetail({ decision, onBack }: Props) {
               {decision.updates.length > 0 && (
                 <span>{decision.updates.length} update{decision.updates.length !== 1 ? 's' : ''}</span>
               )}
+              {decision.durationSeconds != null && decision.durationSeconds > 0 && (
+                <span className="flex items-center gap-1" title="Time spent on this decision">
+                  <Clock className="w-3 h-3" />
+                  {formatDuration(decision.durationSeconds)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -207,20 +222,6 @@ export default function DecisionDetail({ decision, onBack }: Props) {
                 <p className="text-sm text-slate-700">{decision.successCriteria}</p>
               </div>
             )}
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Process Quality at Decision Time</p>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} className={`w-4 h-4 ${i <= decision.processQualityScore ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
-                  ))}
-                </div>
-                <span className="text-xs text-slate-500">{decision.processQualityScore}/5</span>
-                {decision.processQualityNotes && (
-                  <span className="text-xs text-slate-400">— {decision.processQualityNotes}</span>
-                )}
-              </div>
-            </div>
           </div>
         </Section>
 
