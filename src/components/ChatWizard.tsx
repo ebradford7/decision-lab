@@ -87,14 +87,19 @@ const FORECAST_COLORS = [
 ]
 
 function StackedForecastBar({ forecasts }: { forecasts: { description: string; probability: number }[] }) {
-  const total = forecasts.reduce((sum, f) => sum + f.probability, 0)
-  const unassigned = Math.max(0, 100 - total)
+  // For exactly 2 forecasts, auto-complement: second bar = 100 - first probability
+  const displayForecasts = forecasts.length === 2
+    ? [
+        forecasts[0],
+        { ...forecasts[1], probability: Math.max(0, 100 - forecasts[0].probability) },
+      ]
+    : forecasts
 
   return (
     <div>
       {/* Stacked bar */}
       <div className="h-8 rounded-full overflow-hidden flex transition-all duration-500">
-        {forecasts.map((f, i) => {
+        {displayForecasts.map((f, i) => {
           const color = FORECAST_COLORS[i % FORECAST_COLORS.length]
           return (
             <div
@@ -105,18 +110,11 @@ function StackedForecastBar({ forecasts }: { forecasts: { description: string; p
             />
           )
         })}
-        {unassigned > 0 && (
-          <div
-            className="h-full bg-slate-200 transition-all duration-500"
-            style={{ width: `${unassigned}%` }}
-            title={`Unassigned: ${unassigned}%`}
-          />
-        )}
       </div>
 
       {/* Legend */}
       <div className="mt-2.5 space-y-1.5">
-        {forecasts.map((f, i) => {
+        {displayForecasts.map((f, i) => {
           const color = FORECAST_COLORS[i % FORECAST_COLORS.length]
           return (
             <div key={i} className="flex items-start gap-2">
@@ -126,13 +124,6 @@ function StackedForecastBar({ forecasts }: { forecasts: { description: string; p
             </div>
           )
         })}
-        {unassigned > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0 bg-slate-300" />
-            <span className="text-xs text-slate-400 flex-1">Unassigned</span>
-            <span className="text-xs font-semibold flex-shrink-0 text-slate-400">{unassigned}%</span>
-          </div>
-        )}
       </div>
     </div>
   )
