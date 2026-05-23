@@ -1,10 +1,10 @@
 import {
-  ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis,
-  CartesianGrid, Tooltip, ReferenceLine, Line, ComposedChart, Area
+  ResponsiveContainer, CartesianGrid, Tooltip,
+  Line, ComposedChart, XAxis, YAxis, Scatter
 } from 'recharts'
-import { Target, TrendingUp, CheckCircle2, Star, Info } from 'lucide-react'
+import { Target, TrendingUp, Info } from 'lucide-react'
 import { Decision } from '../types'
-import { brierScore, calibrationGrade, calibrationCurveData } from '../utils/calibration'
+import { calibrationGrade } from '../utils/calibration'
 
 interface Props {
   decisions: Decision[]
@@ -22,20 +22,49 @@ function StatBox({ label, value, sub, color }: { label: string; value: string; s
 
 export default function CalibrationView({ decisions }: Props) {
   const resolved = decisions.filter(d => d.status === 'resolved')
-  const withForecasts = resolved.filter(d => d.resolution && d.forecasts.length > 0)
-  const score = brierScore(resolved)
-  const grade = calibrationGrade(score)
-  const curveData = calibrationCurveData(resolved)
+
+  // Collect all individual forecast accuracy entries across all resolved decisions
+  const allForecastEntries = resolved.flatMap(d =>
+    (d.resolution?.forecastAccuracies ?? []).map(fa => ({ ...fa, decisionTitle: d.title, decisionId: d.id }))
+  )
+
+  // Brier score: average of (p/100 - outcome)^2 across all forecast entries
+  const brierScore = allForecastEntries.length > 0
+    ? allForecastEntries.reduce((sum, fa) => {
+        const p = fa.probability / 100
+        const o = fa.wasCorrect ? 1 : 0
+        return sum + (p - o) ** 2
+      }, 0) / allForecastEntries.length
+    : null
+
+  const grade = calibrationGrade(brierScore)
+
+  // Calibration curve: bucket all forecast entries into 10% bins
+  const bins: Record<number, { total: number; correct: number }> = {}
+  for (let b = 0; b <= 90; b += 10) bins[b] = { total: 0, correct: 0 }
+  for (const fa of allForecastEntries) {
+    const bucket = Math.min(Math.floor(fa.probability / 10) * 10, 90)
+    bins[bucket].total++
+    if (fa.wasCorrect) bins[bucket].correct++
+  }
+  const curveData = Object.entries(bins).map(([b, { total, correct }]) => ({
+    predicted: Number(b) + 5,
+    actual: total > 0 ? Math.round((correct / total) * 100) : null,
+    count: total,
+  }))
   const filledCurve = curveData.filter(d => d.actual !== null)
 
-  const avgOutcome = resolved.length
-    ? (resolved.reduce((s, d) => s + (d.resolution?.outcomeScore ?? 0), 0) / resolved.length).toFixed(1)
-    : '—'
-  const avgProcess = resolved.length
-    ? (resolved.reduce((s, d) => s + (d.resolution?.processQualityReview ?? 0), 0) / resolved.length).toFixed(1)
-    : '—'
+  // Forecast accuracy: % of entries that were correct
+  const correctEntries = allForecastEntries.filter(fa => fa.wasCorrect).length
+  const forecastAccuracyPct =
+    allForecastEntries.length > 0
+      ? Math.round((correctEntries / allForecastEntries.length) * 100)
+      : null
 
-  const correctForecasts = withForecasts.filter(d => d.resolution!.forecastWasCorrect).length
+  // Success rate: % of resolved decisions where successCriteriaResult === 'met'
+  const metCount = resolved.filter(d => d.resolution?.successCriteriaResult === 'met').length
+  const partialCount = resolved.filter(d => d.resolution?.successCriteriaResult === 'partial').length
+  const missedCount = resolved.filter(d => d.resolution?.successCriteriaResult === 'missed').length
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
@@ -48,26 +77,25 @@ export default function CalibrationView({ decisions }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatBox
           label="Brier Score"
-          value={score !== null ? score.toFixed(3) : '—'}
+          value={brierScore !== null ? brierScore.toFixed(3) : '—'}
           sub={`Grade: ${grade}`}
           color="bg-indigo-50 border-indigo-100 text-indigo-900"
         />
         <StatBox
           label="Forecast Accuracy"
-          value={withForecasts.length > 0 ? `${Math.round((correctForecasts / withForecasts.length) * 100)}%` : '—'}
-          sub={`${correctForecasts}/${withForecasts.length} correct`}
+          value={forecastAccuracyPct !== null ? `${forecastAccuracyPct}%` : '—'}
+          sub={allForecastEntries.length > 0 ? `${correctEntries}/${allForecastEntries.length} correct` : undefined}
           color="bg-green-50 border-green-100 text-green-900"
         />
         <StatBox
-          label="Avg Outcome"
-          value={avgOutcome}
-          sub="out of 5"
+          label="Success Rate"
+          value={resolved.length > 0 ? `${Math.round((metCount / resolved.length) * 100)}%` : '—'}
+          sub={resolved.length > 0 ? `${metCount}/${resolved.length} met criteria` : undefined}
           color="bg-emerald-50 border-emerald-100 text-emerald-900"
         />
         <StatBox
-          label="Avg Process"
-          value={avgProcess}
-          sub="retrospective"
+          label="Decisions Resolved"
+          value={String(resolved.length)}
           color="bg-amber-50 border-amber-100 text-amber-900"
         />
       </div>
@@ -134,71 +162,67 @@ export default function CalibrationView({ decisions }: Props) {
             )}
           </div>
 
-          {/* Process vs Outcome scatter */}
+          {/* Success Criteria Breakdown */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h2 className="text-sm font-semibold text-slate-900 mb-1 flex items-center gap-2">
-              <Star className="w-4 h-4 text-amber-500" />
-              Process vs Outcome Quality
-            </h2>
-            <p className="text-xs text-slate-400 mb-4">Each dot is a resolved decision. Good decisions cluster top-right — but top-left and bottom-right reveal luck vs skill.</p>
-            <ResponsiveContainer width="100%" height={240}>
-              <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  type="number"
-                  dataKey="process"
-                  domain={[0.5, 5.5]}
-                  ticks={[1, 2, 3, 4, 5]}
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
-                  label={{ value: 'Process Quality', position: 'insideBottom', offset: -10, fontSize: 10, fill: '#94a3b8' }}
-                />
-                <YAxis
-                  type="number"
-                  dataKey="outcome"
-                  domain={[0.5, 5.5]}
-                  ticks={[1, 2, 3, 4, 5]}
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
-                  label={{ value: 'Outcome', angle: -90, position: 'insideLeft', fontSize: 10, fill: '#94a3b8' }}
-                />
-                <Tooltip
-                  cursor={{ strokeDasharray: '3 3' }}
-                  content={({ payload }) => {
-                    if (!payload?.length) return null
-                    const d = payload[0].payload
-                    return (
-                      <div className="bg-white border border-slate-200 rounded-lg p-2 text-xs shadow-sm">
-                        <p className="font-medium text-slate-900 mb-1 max-w-40 truncate">{d.title}</p>
-                        <p className="text-slate-500">Process: {d.process}/5</p>
-                        <p className="text-slate-500">Outcome: {d.outcome}/5</p>
-                      </div>
-                    )
-                  }}
-                />
-                <ReferenceLine x={3} stroke="#e2e8f0" strokeDasharray="4 2" />
-                <ReferenceLine y={3} stroke="#e2e8f0" strokeDasharray="4 2" />
-                <Scatter
-                  data={resolved
-                    .filter(d => d.resolution)
-                    .map(d => ({
-                      process: d.resolution!.processQualityReview,
-                      outcome: d.resolution!.outcomeScore,
-                      title: d.title,
-                    }))}
-                  fill="#4f46e5"
-                  fillOpacity={0.7}
-                />
-              </ScatterChart>
-            </ResponsiveContainer>
+            <h2 className="text-sm font-semibold text-slate-900 mb-1">Success Criteria Breakdown</h2>
+            <p className="text-xs text-slate-400 mb-4">How your resolved decisions measured up to their success criteria.</p>
+
+            <div className="flex gap-3 mb-5">
+              <div className="flex-1 rounded-lg bg-green-50 border border-green-100 p-3 text-center">
+                <p className="text-2xl font-bold text-green-700">{metCount}</p>
+                <p className="text-xs text-green-600 font-medium mt-0.5">Met</p>
+              </div>
+              <div className="flex-1 rounded-lg bg-amber-50 border border-amber-100 p-3 text-center">
+                <p className="text-2xl font-bold text-amber-700">{partialCount}</p>
+                <p className="text-xs text-amber-600 font-medium mt-0.5">Partial</p>
+              </div>
+              <div className="flex-1 rounded-lg bg-red-50 border border-red-100 p-3 text-center">
+                <p className="text-2xl font-bold text-red-700">{missedCount}</p>
+                <p className="text-xs text-red-600 font-medium mt-0.5">Missed</p>
+              </div>
+            </div>
+
+            {/* Stacked bar */}
+            {resolved.length > 0 && (
+              <div className="h-4 rounded-full overflow-hidden flex">
+                {metCount > 0 && (
+                  <div
+                    className="bg-green-400 h-full"
+                    style={{ width: `${(metCount / resolved.length) * 100}%` }}
+                    title={`Met: ${metCount}`}
+                  />
+                )}
+                {partialCount > 0 && (
+                  <div
+                    className="bg-amber-400 h-full"
+                    style={{ width: `${(partialCount / resolved.length) * 100}%` }}
+                    title={`Partial: ${partialCount}`}
+                  />
+                )}
+                {missedCount > 0 && (
+                  <div
+                    className="bg-red-400 h-full"
+                    style={{ width: `${(missedCount / resolved.length) * 100}%` }}
+                    title={`Missed: ${missedCount}`}
+                  />
+                )}
+              </div>
+            )}
+            <div className="flex gap-4 mt-2 text-xs text-slate-400">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" />Met</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />Partial</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Missed</span>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Decision table */}
-      {withForecasts.length > 0 && (
+      {/* Resolved Forecasts table — one row per forecast entry */}
+      {allForecastEntries.length > 0 && (
         <div className="mt-6 bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <h2 className="text-sm font-semibold text-slate-900">Resolved Forecasts</h2>
-            <p className="text-xs text-slate-400">Your forecast accuracy per decision.</p>
+            <p className="text-xs text-slate-400">One row per individual forecast entry.</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -212,31 +236,26 @@ export default function CalibrationView({ decisions }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {withForecasts.map(d => {
-                  const p = d.forecasts[0].probability / 100
-                  const o = d.resolution!.forecastWasCorrect ? 1 : 0
+                {allForecastEntries.map((fa, idx) => {
+                  const p = fa.probability / 100
+                  const o = fa.wasCorrect ? 1 : 0
                   const bs = ((p - o) ** 2).toFixed(3)
                   return (
-                    <tr key={d.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <tr key={`${fa.decisionId}-${idx}`} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-3">
-                        <p className="font-medium text-slate-900 truncate max-w-48">{d.title}</p>
-                        <p className="text-xs text-slate-400">
-                          {new Date(d.resolution!.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </p>
+                        <p className="font-medium text-slate-900 truncate max-w-48">{fa.decisionTitle}</p>
                       </td>
                       <td className="px-3 py-3">
-                        <p className="text-xs text-slate-600 truncate max-w-36">{d.forecasts[0].description}</p>
+                        <p className="text-xs text-slate-600 truncate max-w-48">{fa.description}</p>
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className="font-semibold text-indigo-700">{d.forecasts[0].probability}%</span>
+                        <span className="font-semibold text-indigo-700">{fa.probability}%</span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                          d.resolution!.forecastWasCorrect
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-red-50 text-red-700'
+                          fa.wasCorrect ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                         }`}>
-                          {d.resolution!.forecastWasCorrect ? '✓ Yes' : '✗ No'}
+                          {fa.wasCorrect ? '✓ Yes' : '✗ No'}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-center">

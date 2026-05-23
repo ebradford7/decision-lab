@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  ChevronLeft, Clock, CheckCircle2, Tag, Calendar, Star,
+  ChevronLeft, Clock, CheckCircle2, Tag, Calendar,
   ChevronDown, ChevronUp, PlusCircle, BookOpen, Target,
   AlertTriangle, TrendingUp, Lightbulb, Users, ArrowRight, RotateCcw
 } from 'lucide-react'
@@ -54,68 +54,6 @@ function SocraticRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function QualityMatrix({ processScore, outcomeScore }: { processScore: number; outcomeScore: number }) {
-  const quadrants = [
-    { x: 'high', y: 'high', label: 'Sound & Lucky', color: 'bg-green-100 text-green-800 border-green-200', active: processScore >= 3 && outcomeScore >= 3 },
-    { x: 'low', y: 'high', label: 'Unsound but Lucky', color: 'bg-amber-100 text-amber-800 border-amber-200', active: processScore < 3 && outcomeScore >= 3 },
-    { x: 'high', y: 'low', label: 'Sound but Unlucky', color: 'bg-blue-100 text-blue-800 border-blue-200', active: processScore >= 3 && outcomeScore < 3 },
-    { x: 'low', y: 'low', label: 'Unsound & Unlucky', color: 'bg-red-100 text-red-800 border-red-200', active: processScore < 3 && outcomeScore < 3 },
-  ]
-
-  return (
-    <div className="mt-4">
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Decision Quality Matrix</p>
-      <div className="relative">
-        {/* Y axis label */}
-        <div className="flex">
-          <div className="flex flex-col items-center justify-center w-8 mr-2">
-            <span className="text-xs text-slate-400 [writing-mode:vertical-rl] rotate-180">Outcome Quality →</span>
-          </div>
-          {/* Grid */}
-          <div className="flex-1">
-            <div className="grid grid-cols-2 gap-2">
-              {/* Row 1: Good outcome */}
-              <div className={`rounded-lg border p-3 text-center text-xs font-semibold transition-all ${
-                quadrants[1].active ? quadrants[1].color + ' ring-2 ring-offset-1 ring-amber-400 scale-105' : 'bg-slate-50 text-slate-400 border-slate-100'
-              }`}>
-                {quadrants[1].active && <span className="text-base">✓ </span>}
-                Unsound but Lucky
-                <p className="font-normal text-xs mt-0.5 opacity-70">bad process · good outcome</p>
-              </div>
-              <div className={`rounded-lg border p-3 text-center text-xs font-semibold transition-all ${
-                quadrants[0].active ? quadrants[0].color + ' ring-2 ring-offset-1 ring-green-400 scale-105' : 'bg-slate-50 text-slate-400 border-slate-100'
-              }`}>
-                {quadrants[0].active && <span className="text-base">✓ </span>}
-                Sound & Lucky
-                <p className="font-normal text-xs mt-0.5 opacity-70">good process · good outcome</p>
-              </div>
-              {/* Row 2: Bad outcome */}
-              <div className={`rounded-lg border p-3 text-center text-xs font-semibold transition-all ${
-                quadrants[3].active ? quadrants[3].color + ' ring-2 ring-offset-1 ring-red-400 scale-105' : 'bg-slate-50 text-slate-400 border-slate-100'
-              }`}>
-                {quadrants[3].active && <span className="text-base">✓ </span>}
-                Unsound & Unlucky
-                <p className="font-normal text-xs mt-0.5 opacity-70">bad process · bad outcome</p>
-              </div>
-              <div className={`rounded-lg border p-3 text-center text-xs font-semibold transition-all ${
-                quadrants[2].active ? quadrants[2].color + ' ring-2 ring-offset-1 ring-blue-400 scale-105' : 'bg-slate-50 text-slate-400 border-slate-100'
-              }`}>
-                {quadrants[2].active && <span className="text-base">✓ </span>}
-                Sound but Unlucky
-                <p className="font-normal text-xs mt-0.5 opacity-70">good process · bad outcome</p>
-              </div>
-            </div>
-            {/* X axis label */}
-            <div className="flex justify-between text-xs text-slate-400 mt-1.5 px-2">
-              <span>← Low process quality</span>
-              <span>High process quality →</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function DecisionDetail({ decision, onBack }: Props) {
   const { addUpdate, resolveDecision } = useDecisions()
@@ -325,41 +263,45 @@ export default function DecisionDetail({ decision, onBack }: Props) {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-lg border border-slate-200 p-3">
-                  <p className="text-xs font-medium text-slate-500 mb-1.5">Outcome Quality</p>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} className={`w-4 h-4 ${i <= decision.resolution!.outcomeScore ? 'fill-green-400 text-green-400' : 'text-slate-200'}`} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">{decision.resolution.outcomeScore}/5</p>
-                </div>
-                <div className="bg-white rounded-lg border border-slate-200 p-3">
-                  <p className="text-xs font-medium text-slate-500 mb-1.5">Process Quality (Retrospective)</p>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} className={`w-4 h-4 ${i <= decision.resolution!.processQualityReview ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">{decision.resolution.processQualityReview}/5</p>
-                </div>
+              {/* Success criteria badge */}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Success Criteria</p>
+                {decision.resolution.successCriteriaResult === 'met' && (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700">
+                    ✓ Success Criteria Met
+                  </span>
+                )}
+                {decision.resolution.successCriteriaResult === 'partial' && (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                    ◑ Partially Met
+                  </span>
+                )}
+                {decision.resolution.successCriteriaResult === 'missed' && (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700">
+                    ✗ Criteria Missed
+                  </span>
+                )}
               </div>
 
-              {decision.forecasts.length > 0 && (
-                <div className={`rounded-lg border p-3 text-sm font-medium flex items-center gap-2 ${
-                  decision.resolution.forecastWasCorrect
-                    ? 'bg-green-50 border-green-200 text-green-700'
-                    : 'bg-red-50 border-red-200 text-red-700'
-                }`}>
-                  {decision.resolution.forecastWasCorrect ? '✓ Primary forecast came true' : '✗ Primary forecast did not come true'}
+              {/* Forecast accuracies */}
+              {decision.resolution.forecastAccuracies.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Forecast Results</p>
+                  <div className="space-y-2">
+                    {decision.resolution.forecastAccuracies.map((fa, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                        <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                          fa.wasCorrect ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {fa.wasCorrect ? '✓' : '✗'}
+                        </span>
+                        <p className="text-xs text-slate-700 flex-1">{fa.description}</p>
+                        <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{fa.probability}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-
-              <QualityMatrix
-                processScore={decision.resolution.processQualityReview}
-                outcomeScore={decision.resolution.outcomeScore}
-              />
 
               {decision.resolution.lessonsLearned && (
                 <div>

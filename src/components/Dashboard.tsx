@@ -57,7 +57,7 @@ function DecisionCard({ d, onView }: { d: Decision; onView: () => void }) {
             <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
               d.status === 'active'
                 ? 'bg-blue-50 text-blue-700'
-                : d.resolution && d.resolution.outcomeScore >= 3
+                : d.resolution && d.resolution.successCriteriaResult === 'met'
                 ? 'bg-green-50 text-green-700'
                 : 'bg-slate-100 text-slate-600'
             }`}>
@@ -230,11 +230,14 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
                     <p className="text-xs font-medium text-slate-800 group-hover:text-indigo-600 truncate">{d.title}</p>
                     {d.resolution && (
                       <div className="flex gap-2 mt-0.5">
-                        <span className="text-xs text-slate-400">
-                          Process: {d.resolution.processQualityReview}/5
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          Outcome: {d.resolution.outcomeScore}/5
+                        <span className={`text-xs font-medium ${
+                          d.resolution.successCriteriaResult === 'met' ? 'text-green-600'
+                          : d.resolution.successCriteriaResult === 'partial' ? 'text-amber-600'
+                          : 'text-red-600'
+                        }`}>
+                          {d.resolution.successCriteriaResult === 'met' ? '✓ Met'
+                          : d.resolution.successCriteriaResult === 'partial' ? '◑ Partial'
+                          : '✗ Missed'}
                         </span>
                       </div>
                     )}

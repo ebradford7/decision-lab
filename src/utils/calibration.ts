@@ -6,12 +6,17 @@ import { Decision } from '../types'
  * Here we treat forecastWasCorrect as the binary outcome (1 or 0).
  */
 export function brierScore(resolved: Decision[]): number | null {
-  const withForecasts = resolved.filter(d => d.resolution && d.forecasts.length > 0)
-  if (withForecasts.length === 0) return null
+  const allEntries = resolved.flatMap(d =>
+    (d.resolution?.forecastAccuracies ?? []).map(fa => ({
+      probability: fa.probability,
+      wasCorrect: fa.wasCorrect,
+    }))
+  )
+  if (allEntries.length === 0) return null
 
-  const scores = withForecasts.map(d => {
-    const p = d.forecasts[0].probability / 100
-    const o = d.resolution!.forecastWasCorrect ? 1 : 0
+  const scores = allEntries.map(fa => {
+    const p = fa.probability / 100
+    const o = fa.wasCorrect ? 1 : 0
     return (p - o) ** 2
   })
 
@@ -35,12 +40,13 @@ export function calibrationCurveData(resolved: Decision[]) {
   for (let b = 0; b <= 90; b += 10) bins[b] = { total: 0, correct: 0 }
 
   for (const d of resolved) {
-    if (!d.resolution || d.forecasts.length === 0) continue
-    const p = d.forecasts[0].probability
-    const bucket = Math.floor(p / 10) * 10
-    const key = Math.min(bucket, 90)
-    bins[key].total++
-    if (d.resolution.forecastWasCorrect) bins[key].correct++
+    if (!d.resolution) continue
+    for (const fa of d.resolution.forecastAccuracies) {
+      const bucket = Math.floor(fa.probability / 10) * 10
+      const key = Math.min(bucket, 90)
+      bins[key].total++
+      if (fa.wasCorrect) bins[key].correct++
+    }
   }
 
   return Object.entries(bins).map(([b, { total, correct }]) => ({

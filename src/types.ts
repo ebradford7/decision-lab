@@ -21,9 +21,8 @@ export interface UpdateEntry {
 export interface Resolution {
   date: string
   actualOutcome: string
-  outcomeScore: number        // 1–5: quality of how things turned out
-  processQualityReview: number // 1–5: retrospective view of decision process
-  forecastWasCorrect: boolean
+  successCriteriaResult: 'met' | 'partial' | 'missed'
+  forecastAccuracies: { description: string; probability: number; wasCorrect: boolean }[]
   lessonsLearned: string
 }
 

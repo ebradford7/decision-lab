@@ -133,11 +133,18 @@ export default function DecisionList({ decisions, onView, onDelete }: Props) {
                     ))}
                   </div>
 
-                  {/* Resolution scores */}
+                  {/* Resolution result */}
                   {d.resolution && (
                     <div className="hidden lg:flex items-center gap-3 text-xs text-slate-500 flex-shrink-0">
-                      <span>Process: <strong>{d.resolution.processQualityReview}/5</strong></span>
-                      <span>Outcome: <strong>{d.resolution.outcomeScore}/5</strong></span>
+                      <span className={`font-medium ${
+                        d.resolution.successCriteriaResult === 'met' ? 'text-green-600'
+                        : d.resolution.successCriteriaResult === 'partial' ? 'text-amber-600'
+                        : 'text-red-600'
+                      }`}>
+                        {d.resolution.successCriteriaResult === 'met' ? '✓ Met'
+                        : d.resolution.successCriteriaResult === 'partial' ? '◑ Partial'
+                        : '✗ Missed'}
+                      </span>
                     </div>
                   )}
 

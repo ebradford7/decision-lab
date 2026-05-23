@@ -78,6 +78,66 @@ function ProbabilityBar({ probability }: { probability: number }) {
   )
 }
 
+const FORECAST_COLORS = [
+  { bar: 'bg-indigo-500', legend: 'bg-indigo-400', text: 'text-indigo-700' },
+  { bar: 'bg-violet-500', legend: 'bg-violet-400', text: 'text-violet-700' },
+  { bar: 'bg-sky-500', legend: 'bg-sky-400', text: 'text-sky-700' },
+  { bar: 'bg-emerald-500', legend: 'bg-emerald-400', text: 'text-emerald-700' },
+  { bar: 'bg-amber-500', legend: 'bg-amber-400', text: 'text-amber-700' },
+]
+
+function StackedForecastBar({ forecasts }: { forecasts: { description: string; probability: number }[] }) {
+  const total = forecasts.reduce((sum, f) => sum + f.probability, 0)
+  const unassigned = Math.max(0, 100 - total)
+
+  return (
+    <div>
+      {/* Stacked bar */}
+      <div className="h-8 rounded-full overflow-hidden flex transition-all duration-500">
+        {forecasts.map((f, i) => {
+          const color = FORECAST_COLORS[i % FORECAST_COLORS.length]
+          return (
+            <div
+              key={i}
+              className={`h-full ${color.bar} transition-all duration-500`}
+              style={{ width: `${f.probability}%` }}
+              title={`${f.description}: ${f.probability}%`}
+            />
+          )
+        })}
+        {unassigned > 0 && (
+          <div
+            className="h-full bg-slate-200 transition-all duration-500"
+            style={{ width: `${unassigned}%` }}
+            title={`Unassigned: ${unassigned}%`}
+          />
+        )}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-2.5 space-y-1.5">
+        {forecasts.map((f, i) => {
+          const color = FORECAST_COLORS[i % FORECAST_COLORS.length]
+          return (
+            <div key={i} className="flex items-start gap-2">
+              <span className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 mt-0.5 ${color.legend}`} />
+              <span className="text-xs text-slate-600 flex-1 leading-snug">{f.description}</span>
+              <span className={`text-xs font-semibold flex-shrink-0 ${color.text}`}>{f.probability}%</span>
+            </div>
+          )
+        })}
+        {unassigned > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0 bg-slate-300" />
+            <span className="text-xs text-slate-400 flex-1">Unassigned</span>
+            <span className="text-xs font-semibold flex-shrink-0 text-slate-400">{unassigned}%</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Render **bold** markdown inline
 function renderText(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g)
@@ -476,14 +536,7 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Forecasts</p>
             {hasForecasts ? (
-              <div className="space-y-3">
-                {filteredForecasts.map((f, i) => (
-                  <div key={i}>
-                    <p className="text-sm text-slate-700 leading-snug">{f.description}</p>
-                    <ProbabilityBar probability={f.probability} />
-                  </div>
-                ))}
-              </div>
+              <StackedForecastBar forecasts={filteredForecasts} />
             ) : (
               <EmptyState label="Probability forecasts will appear here…" />
             )}
