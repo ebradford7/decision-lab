@@ -18,13 +18,11 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
   )
   const [lessonsLearned, setLessonsLearned] = useState('')
 
-  const allForecastsAnswered =
-    decision.forecasts.length === 0 || forecastAnswers.every(a => a !== null)
+  const missingFields: string[] = []
+  if (!actualOutcome.trim()) missingFields.push('describe what happened')
+  if (successCriteriaResult === null) missingFields.push('rate your success criteria')
 
-  const canSave =
-    actualOutcome.trim() !== '' &&
-    successCriteriaResult !== null &&
-    allForecastsAnswered
+  const canSave = missingFields.length === 0
 
   const handleSave = () => {
     if (!canSave) return
@@ -32,11 +30,14 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
       date: new Date().toISOString(),
       actualOutcome: actualOutcome.trim(),
       successCriteriaResult: successCriteriaResult!,
-      forecastAccuracies: decision.forecasts.map((f, i) => ({
-        description: f.description,
-        probability: f.probability,
-        wasCorrect: forecastAnswers[i] as boolean,
-      })),
+      // Only include forecasts that were explicitly answered
+      forecastAccuracies: decision.forecasts
+        .map((f, i) => forecastAnswers[i] !== null ? {
+          description: f.description,
+          probability: f.probability,
+          wasCorrect: forecastAnswers[i] as boolean,
+        } : null)
+        .filter((fa): fa is NonNullable<typeof fa> => fa !== null),
       lessonsLearned: lessonsLearned.trim(),
     }
     onSave(resolution)
@@ -126,7 +127,7 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
           {decision.forecasts.length > 0 && (
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-2">
-                How did your forecasts play out? <span className="text-red-400">*</span>
+                How did your forecasts play out? <span className="text-slate-400 font-normal">(optional)</span>
               </label>
               <div className="space-y-3">
                 {decision.forecasts.map((f, i) => (
@@ -176,18 +177,25 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-5 pb-5">
-          <button onClick={onClose} className="text-sm text-slate-500 hover:text-slate-700 px-4 py-2">
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            Mark Resolved
-          </button>
+        <div className="px-5 pb-5">
+          {missingFields.length > 0 && (
+            <p className="text-xs text-amber-600 mb-3">
+              Still needed: {missingFields.join(' and ')}.
+            </p>
+          )}
+          <div className="flex justify-end gap-3">
+            <button onClick={onClose} className="text-sm text-slate-500 hover:text-slate-700 px-4 py-2">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!canSave}
+              className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Mark Resolved
+            </button>
+          </div>
         </div>
       </div>
     </div>
