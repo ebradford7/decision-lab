@@ -20,6 +20,20 @@ function StatBox({ label, value, sub, color }: { label: string; value: string; s
   )
 }
 
+function GroupCard({ title, subtitle, borderColor, children }: {
+  title: string; subtitle: string; borderColor: string; children: React.ReactNode
+}) {
+  return (
+    <div className={`bg-white rounded-xl border border-slate-200 border-l-4 ${borderColor} p-5`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-0.5">{title}</p>
+      <p className="text-xs text-slate-400 mb-4">{subtitle}</p>
+      <div className="grid grid-cols-2 gap-3">
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function CalibrationView({ decisions }: Props) {
   const resolved = decisions.filter(d => d.status === 'resolved')
 
@@ -68,36 +82,55 @@ export default function CalibrationView({ decisions }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-xl font-bold text-slate-900">Calibration</h1>
         <p className="text-sm text-slate-500 mt-0.5">How well do your probability estimates match reality over time?</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatBox
-          label="Brier Score"
-          value={brierScore !== null ? brierScore.toFixed(3) : '—'}
-          sub={`Grade: ${grade}`}
-          color="bg-indigo-50 border-indigo-100 text-indigo-900"
-        />
-        <StatBox
-          label="Forecast Accuracy"
-          value={forecastAccuracyPct !== null ? `${forecastAccuracyPct}%` : '—'}
-          sub={allForecastEntries.length > 0 ? `${correctEntries}/${allForecastEntries.length} correct` : undefined}
-          color="bg-green-50 border-green-100 text-green-900"
-        />
-        <StatBox
-          label="Success Rate"
-          value={resolved.length > 0 ? `${Math.round((metCount / resolved.length) * 100)}%` : '—'}
-          sub={resolved.length > 0 ? `${metCount}/${resolved.length} met criteria` : undefined}
-          color="bg-emerald-50 border-emerald-100 text-emerald-900"
-        />
-        <StatBox
-          label="Decisions Resolved"
-          value={String(resolved.length)}
-          color="bg-amber-50 border-amber-100 text-amber-900"
-        />
+      {/* Framing callout */}
+      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6">
+        <p className="text-sm text-indigo-800 font-medium">A well-calibrated forecaster with a bad outcome is still a good decision-maker.</p>
+        <p className="text-xs text-indigo-600 mt-1">Focus on improving your process — your Brier score, not just your win rate.</p>
+      </div>
+
+      {/* Stats — two grouped cards */}
+      <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <GroupCard
+          title="Process Quality"
+          subtitle="How well you reasoned — the part you can improve"
+          borderColor="border-l-indigo-400"
+        >
+          <StatBox
+            label="Brier Score"
+            value={brierScore !== null ? brierScore.toFixed(3) : '—'}
+            sub={`Grade: ${grade}`}
+            color="bg-indigo-50 border-indigo-100 text-indigo-900"
+          />
+          <StatBox
+            label="Forecast Accuracy"
+            value={forecastAccuracyPct !== null ? `${forecastAccuracyPct}%` : '—'}
+            sub={allForecastEntries.length > 0 ? `${correctEntries}/${allForecastEntries.length} correct` : undefined}
+            color="bg-indigo-50 border-indigo-100 text-indigo-900"
+          />
+        </GroupCard>
+
+        <GroupCard
+          title="Outcome Results"
+          subtitle="What the world delivered — influenced by luck"
+          borderColor="border-l-emerald-400"
+        >
+          <StatBox
+            label="Success Rate"
+            value={resolved.length > 0 ? `${Math.round((metCount / resolved.length) * 100)}%` : '—'}
+            sub={resolved.length > 0 ? `${metCount}/${resolved.length} met criteria` : undefined}
+            color="bg-emerald-50 border-emerald-100 text-emerald-900"
+          />
+          <StatBox
+            label="Decisions Resolved"
+            value={String(resolved.length)}
+            color="bg-slate-50 border-slate-100 text-slate-900"
+          />
+        </GroupCard>
       </div>
 
       {resolved.length < 3 ? (
@@ -278,9 +311,9 @@ export default function CalibrationView({ decisions }: Props) {
       <div className="mt-4 flex gap-2 bg-slate-50 border border-slate-200 rounded-xl p-4">
         <Info className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
         <div className="text-xs text-slate-500 space-y-0.5">
-          <p><strong className="text-slate-700">Brier Score</strong> measures forecast accuracy (lower = better).</p>
+          <p><strong className="text-slate-700">Brier Score</strong> measures forecast accuracy (lower = better) — it's a process metric, not an outcome metric.</p>
           <p>0.00 = perfect · 0.10 = excellent · 0.25 = no-skill (always predict 50%) · 1.00 = worst possible</p>
-          <p>A superforecaster typically achieves Brier scores below 0.15 on geopolitical questions.</p>
+          <p>A superforecaster typically achieves Brier scores below 0.15 on geopolitical questions. A good Brier score means you reasoned well — regardless of whether individual outcomes went your way.</p>
         </div>
       </div>
     </div>

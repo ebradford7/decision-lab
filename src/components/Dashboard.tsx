@@ -14,8 +14,8 @@ interface Props {
   onView: (id: string) => void
 }
 
-function StatCard({ label, value, sub, icon: Icon, color }: {
-  label: string; value: string | number; sub?: string; icon: React.ElementType; color: string
+function StatCard({ label, value, sub, icon: Icon, color, badge }: {
+  label: string; value: string | number; sub?: string; icon: React.ElementType; color: string; badge?: { text: string; style: string }
 }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
@@ -25,8 +25,15 @@ function StatCard({ label, value, sub, icon: Icon, color }: {
           <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
           {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
         </div>
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
-          <Icon className="w-4.5 h-4.5" />
+        <div className="flex flex-col items-end gap-1.5">
+          {badge && (
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${badge.style}`}>
+              {badge.text}
+            </span>
+          )}
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
+            <Icon className="w-4.5 h-4.5" />
+          </div>
         </div>
       </div>
     </div>
@@ -123,7 +130,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
         <StatCard
           label="Active"
           value={active.length}
@@ -144,6 +151,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
           sub={score !== null ? grade : 'need resolved decisions'}
           icon={TrendingUp}
           color="bg-indigo-50 text-indigo-600"
+          badge={{ text: 'Process', style: 'bg-indigo-100 text-indigo-600' }}
         />
         <StatCard
           label="Success Rate"
@@ -151,8 +159,10 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
           sub={resolved.length ? `${metCount}/${resolved.length} criteria met` : 'no resolved decisions'}
           icon={Target}
           color="bg-amber-50 text-amber-600"
+          badge={{ text: 'Outcome', style: 'bg-slate-100 text-slate-500' }}
         />
       </div>
+      <p className="text-xs text-slate-400 mb-6 -mt-0">Process quality (calibration) and outcome results are tracked separately — good decisions can still have bad outcomes.</p>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Active decisions */}

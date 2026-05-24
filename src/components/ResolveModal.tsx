@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, CheckCircle2, Info } from 'lucide-react'
+import { X, CheckCircle2 } from 'lucide-react'
 import { Decision, Resolution } from '../types'
 
 interface Props {
@@ -68,112 +68,135 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
           </button>
         </div>
 
-        <div className="p-5 space-y-5">
-          {/* Key principle callout */}
-          <div className="flex gap-2 bg-indigo-50 border border-indigo-100 rounded-lg p-3">
-            <Info className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-indigo-700">
-              <strong>Remember:</strong> A good decision can have a bad outcome, and a bad decision can have a good outcome.
-              Evaluate these <em>separately and honestly</em>.
-            </p>
-          </div>
+        <div className="p-5 space-y-6">
+          {/* Framing note */}
+          <p className="text-xs text-slate-400 italic">
+            Outcome and process are scored separately — because luck is real.
+          </p>
 
-          {/* What actually happened */}
+          {/* ── OUTCOME section ── */}
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              What actually happened? <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={actualOutcome}
-              onChange={e => setActualOutcome(e.target.value)}
-              rows={3}
-              autoFocus
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              placeholder="Describe the actual outcome as objectively as possible…"
-            />
-          </div>
-
-          {/* Success criteria */}
-          {decision.successCriteria && (
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                Did you meet your success criteria? <span className="text-red-400">*</span>
-              </label>
-              <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 mb-3 text-xs text-slate-600">
-                <span className="font-semibold text-slate-500 uppercase tracking-wide text-[10px]">Success criteria: </span>
-                {decision.successCriteria}
-              </div>
-              <div className="flex gap-2">
-                {([
-                  { value: 'met', label: 'Met', active: 'bg-green-50 border-green-400 text-green-700', inactive: 'border-slate-200 text-slate-500 hover:border-slate-300' },
-                  { value: 'partial', label: 'Partially Met', active: 'bg-amber-50 border-amber-400 text-amber-700', inactive: 'border-slate-200 text-slate-500 hover:border-slate-300' },
-                  { value: 'missed', label: 'Missed', active: 'bg-red-50 border-red-400 text-red-700', inactive: 'border-slate-200 text-slate-500 hover:border-slate-300' },
-                ] as const).map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSuccessCriteriaResult(opt.value)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                      successCriteriaResult === opt.value ? opt.active : opt.inactive
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-500">
+                Outcome
+              </span>
             </div>
-          )}
+            <p className="text-xs text-slate-400 mb-4">What the world delivered — influenced by luck and factors outside your control.</p>
 
-          {/* Forecast accuracy */}
-          {decision.forecasts.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-2">
-                How did your forecasts play out? <span className="text-slate-400 font-normal">(optional)</span>
-              </label>
-              <div className="space-y-3">
-                {decision.forecasts.map((f, i) => (
-                  <div key={f.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="text-xs text-slate-700 flex-1">{f.description}</p>
-                      <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{f.probability}%</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setForecastAnswer(i, true)}
-                        className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                          forecastAnswers[i] === true
-                            ? 'bg-green-50 border-green-400 text-green-700'
-                            : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                        }`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        onClick={() => setForecastAnswer(i, false)}
-                        className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                          forecastAnswers[i] === false
-                            ? 'bg-red-50 border-red-400 text-red-700'
-                            : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                        }`}
-                      >
-                        No
-                      </button>
-                    </div>
+            {/* What actually happened */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  What actually happened? <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={actualOutcome}
+                  onChange={e => setActualOutcome(e.target.value)}
+                  rows={3}
+                  autoFocus
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  placeholder="Describe the actual outcome as objectively as possible…"
+                />
+              </div>
+
+              {/* Success criteria */}
+              {decision.successCriteria && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Did you meet your success criteria? <span className="text-red-400">*</span>
+                  </label>
+                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 mb-3 text-xs text-slate-600">
+                    <span className="font-semibold text-slate-500 uppercase tracking-wide text-[10px]">Success criteria: </span>
+                    {decision.successCriteria}
                   </div>
-                ))}
+                  <div className="flex gap-2">
+                    {([
+                      { value: 'met', label: 'Met', active: 'bg-green-50 border-green-400 text-green-700', inactive: 'border-slate-200 text-slate-500 hover:border-slate-300' },
+                      { value: 'partial', label: 'Partially Met', active: 'bg-amber-50 border-amber-400 text-amber-700', inactive: 'border-slate-200 text-slate-500 hover:border-slate-300' },
+                      { value: 'missed', label: 'Missed', active: 'bg-red-50 border-red-400 text-red-700', inactive: 'border-slate-200 text-slate-500 hover:border-slate-300' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setSuccessCriteriaResult(opt.value)}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                          successCriteriaResult === opt.value ? opt.active : opt.inactive
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-slate-100" />
+
+          {/* ── PROCESS REVIEW section ── */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-100 text-indigo-600">
+                Process Review
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">How well did you think through the decision? This is what you can actually improve.</p>
+
+            <div className="space-y-4">
+              {/* Forecast accuracy */}
+              {decision.forecasts.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-2">
+                    How did your forecasts play out? <span className="text-slate-400 font-normal">(optional)</span>
+                  </label>
+                  <div className="space-y-3">
+                    {decision.forecasts.map((f, i) => (
+                      <div key={f.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="text-xs text-slate-700 flex-1">{f.description}</p>
+                          <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{f.probability}%</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setForecastAnswer(i, true)}
+                            className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                              forecastAnswers[i] === true
+                                ? 'bg-green-50 border-green-400 text-green-700'
+                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                            }`}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setForecastAnswer(i, false)}
+                            className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                              forecastAnswers[i] === false
+                                ? 'bg-red-50 border-red-400 text-red-700'
+                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                            }`}
+                          >
+                            No
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lessons learned */}
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">Lessons learned</label>
+                <textarea
+                  value={lessonsLearned}
+                  onChange={e => setLessonsLearned(e.target.value)}
+                  rows={3}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  placeholder="What would you do differently? What surprised you? What confirmed your model?"
+                />
               </div>
             </div>
-          )}
-
-          {/* Lessons learned */}
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Lessons learned</label>
-            <textarea
-              value={lessonsLearned}
-              onChange={e => setLessonsLearned(e.target.value)}
-              rows={3}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              placeholder="What would you do differently? What surprised you? What confirmed your model?"
-            />
           </div>
         </div>
 
