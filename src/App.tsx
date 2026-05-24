@@ -14,7 +14,7 @@ import { Decision } from './types'
 // ─── Inner app — only rendered when authenticated ─────────────────────────────
 function AppInner() {
   const { user, signOut } = useAuth()
-  const { decisions, loading, addDecision, deleteDecision } = useDecisions()
+  const { decisions, loading, addDecision, updateDecision, addUpdate, resolveDecision, deleteDecision } = useDecisions()
   const [view, setView] = useState<View>('dashboard')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -76,6 +76,9 @@ function AppInner() {
         <DecisionDetail
           decision={selectedDecision}
           onBack={() => handleNav('list')}
+          onAddUpdate={(id, entry) => addUpdate(id, entry)}
+          onUpdateDecision={(id, patch) => updateDecision(id, patch)}
+          onResolve={(id, resolution) => resolveDecision(id, resolution)}
         />
       )}
       {view === 'calibration' && (

@@ -2,16 +2,18 @@ import { useState } from 'react'
 import {
   ChevronLeft, Clock, CheckCircle2, Tag, Calendar,
   ChevronDown, ChevronUp, PlusCircle, BookOpen, Target,
-  AlertTriangle, TrendingUp, Lightbulb, Users, ArrowRight, RotateCcw
+  TrendingUp, Lightbulb, Users, RotateCcw
 } from 'lucide-react'
-import { Decision } from '../types'
+import { Decision, UpdateEntry, Resolution } from '../types'
 import UpdateModal from './UpdateModal'
 import ResolveModal from './ResolveModal'
-import { useDecisions } from '../hooks/useDecisions'
 
 interface Props {
   decision: Decision
   onBack: () => void
+  onAddUpdate: (id: string, entry: UpdateEntry) => void
+  onUpdateDecision: (id: string, patch: Partial<Decision>) => void
+  onResolve: (id: string, resolution: Resolution) => void
 }
 
 function formatDuration(seconds: number): string {
@@ -21,6 +23,12 @@ function formatDuration(seconds: number): string {
   if (h > 0) return `${h}h ${m}m`
   if (m > 0) return `${m}m ${s}s`
   return `${s}s`
+}
+
+function formatDate(dateStr: string): string | null {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 }
 
 function Section({ title, icon: Icon, children, defaultOpen = true }: {
@@ -55,8 +63,7 @@ function SocraticRow({ label, value }: { label: string; value: string }) {
 }
 
 
-export default function DecisionDetail({ decision, onBack }: Props) {
-  const { addUpdate, resolveDecision } = useDecisions()
+export default function DecisionDetail({ decision, onBack, onAddUpdate, onUpdateDecision, onResolve }: Props) {
   const [showUpdate, setShowUpdate] = useState(false)
   const [showResolve, setShowResolve] = useState(false)
 
@@ -98,10 +105,10 @@ export default function DecisionDetail({ decision, onBack }: Props) {
                 <Calendar className="w-3 h-3" />
                 Created {new Date(decision.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
-              {decision.deadline && (
+              {decision.deadline && formatDate(decision.deadline) && (
                 <span className="flex items-center gap-1">
                   <Target className="w-3 h-3" />
-                  Resolution by {new Date(decision.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  Revisit by {formatDate(decision.deadline)}
                 </span>
               )}
               {decision.updates.length > 0 && (
@@ -259,7 +266,7 @@ export default function DecisionDetail({ decision, onBack }: Props) {
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Actual Outcome</p>
                 <p className="text-sm text-slate-700">{decision.resolution.actualOutcome}</p>
                 <p className="text-xs text-slate-400 mt-1.5">
-                  Resolved {new Date(decision.resolution.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  Resolved {formatDate(decision.resolution.date)}
                 </p>
               </div>
 
@@ -317,14 +324,15 @@ export default function DecisionDetail({ decision, onBack }: Props) {
       {showUpdate && (
         <UpdateModal
           decision={decision}
-          onSave={entry => addUpdate(decision.id, entry)}
+          onSave={entry => onAddUpdate(decision.id, entry)}
+          onExtendDeadline={newDeadline => onUpdateDecision(decision.id, { deadline: newDeadline })}
           onClose={() => setShowUpdate(false)}
         />
       )}
       {showResolve && (
         <ResolveModal
           decision={decision}
-          onSave={resolution => resolveDecision(decision.id, resolution)}
+          onSave={resolution => onResolve(decision.id, resolution)}
           onClose={() => setShowResolve(false)}
         />
       )}

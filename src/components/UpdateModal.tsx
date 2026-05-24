@@ -1,30 +1,41 @@
 import { useState } from 'react'
-import { X, PlusCircle } from 'lucide-react'
+import { X, PlusCircle, Calendar } from 'lucide-react'
 import { v4 as uuid } from 'uuid'
 import { Decision, UpdateEntry } from '../types'
 
 interface Props {
   decision: Decision
   onSave: (entry: UpdateEntry) => void
+  onExtendDeadline: (newDeadline: string) => void
   onClose: () => void
 }
 
-export default function UpdateModal({ decision, onSave, onClose }: Props) {
+export default function UpdateModal({ decision, onSave, onExtendDeadline, onClose }: Props) {
   const [notes, setNotes] = useState('')
   const [updatedProbs, setUpdatedProbs] = useState<{ description: string; probability: number }[]>(
     decision.forecasts.map(f => ({ description: f.description, probability: f.probability }))
   )
   const [reviseProbabilities, setReviseProbabilities] = useState(false)
+  const [extendDeadline, setExtendDeadline] = useState(false)
+  const [newDeadline, setNewDeadline] = useState(decision.deadline ?? '')
+
+  const deadlineChanged = extendDeadline && newDeadline && newDeadline !== decision.deadline
+  const canSave = notes.trim().length > 0 || deadlineChanged
 
   const handleSave = () => {
-    if (!notes.trim()) return
-    const entry: UpdateEntry = {
-      id: uuid(),
-      date: new Date().toISOString(),
-      notes: notes.trim(),
-      updatedForecasts: reviseProbabilities ? updatedProbs : undefined,
+    if (!canSave) return
+    if (notes.trim()) {
+      const entry: UpdateEntry = {
+        id: uuid(),
+        date: new Date().toISOString(),
+        notes: notes.trim(),
+        updatedForecasts: reviseProbabilities ? updatedProbs : undefined,
+      }
+      onSave(entry)
     }
-    onSave(entry)
+    if (deadlineChanged) {
+      onExtendDeadline(newDeadline)
+    }
     onClose()
   }
 
@@ -54,6 +65,7 @@ export default function UpdateModal({ decision, onSave, onClose }: Props) {
             />
           </div>
 
+          {/* Revise probabilities */}
           <div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -85,6 +97,38 @@ export default function UpdateModal({ decision, onSave, onClose }: Props) {
               ))}
             </div>
           )}
+
+          {/* Extend deadline */}
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={extendDeadline}
+                onChange={e => setExtendDeadline(e.target.checked)}
+                className="rounded accent-indigo-600"
+              />
+              <span className="text-sm text-slate-700 font-medium">
+                {decision.deadline ? 'Adjust resolution date' : 'Set a resolution date'}
+              </span>
+            </label>
+            <p className="text-xs text-slate-400 mt-0.5 ml-6">
+              {decision.deadline
+                ? `Currently set to ${new Date(decision.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}.`
+                : 'When do you expect to know the outcome?'}
+            </p>
+          </div>
+
+          {extendDeadline && (
+            <div className="ml-6 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              <input
+                type="date"
+                value={newDeadline}
+                onChange={e => setNewDeadline(e.target.value)}
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 px-5 pb-5">
@@ -93,7 +137,7 @@ export default function UpdateModal({ decision, onSave, onClose }: Props) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!notes.trim()}
+            disabled={!canSave}
             className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
