@@ -1,6 +1,12 @@
 import { useState } from 'react'
-import { Search, Clock, CheckCircle2, ArrowRight, Trash2 } from 'lucide-react'
+import { Search, Clock, CheckCircle2, ArrowRight, Trash2, Calendar, Target } from 'lucide-react'
 import { Decision } from '../types'
+
+function fmtDate(dateStr: string): string | null {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+}
 
 interface Props {
   decisions: Decision[]
@@ -118,10 +124,23 @@ export default function DecisionList({ decisions, onView, onDelete }: Props) {
                         </span>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      {d.updates.length > 0 && ` · ${d.updates.length} update${d.updates.length !== 1 ? 's' : ''}`}
-                    </p>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <Calendar className="w-3 h-3" />
+                        {fmtDate(d.createdAt)}
+                      </span>
+                      {d.deadline && fmtDate(d.deadline) && (
+                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                          <Target className="w-3 h-3" />
+                          Revisit by {fmtDate(d.deadline)}
+                        </span>
+                      )}
+                      {d.updates.length > 0 && (
+                        <span className="text-xs text-slate-400">
+                          {d.updates.length} update{d.updates.length !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Resolution result */}

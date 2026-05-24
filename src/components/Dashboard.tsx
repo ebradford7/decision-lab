@@ -1,4 +1,10 @@
 import { PlusCircle, Clock, CheckCircle2, TrendingUp, ArrowRight, Calendar, Target } from 'lucide-react'
+
+function fmtDate(dateStr: string): string | null {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return null
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+}
 import { Decision } from '../types'
 import { brierScore, calibrationGrade } from '../utils/calibration'
 
@@ -29,9 +35,6 @@ function StatCard({ label, value, sub, icon: Icon, color }: {
 
 
 function DecisionCard({ d, onView }: { d: Decision; onView: () => void }) {
-  const daysSince = Math.floor(
-    (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-  )
   const topForecast = d.forecasts[0]
 
   return (
@@ -70,10 +73,19 @@ function DecisionCard({ d, onView }: { d: Decision; onView: () => void }) {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="text-xs text-slate-400">
-            {daysSince === 0 ? 'Today' : `${daysSince}d ago`}
-          </span>
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <Calendar className="w-3 h-3" />
+              {fmtDate(d.createdAt)}
+            </span>
+            {d.deadline && fmtDate(d.deadline) && (
+              <span className="flex items-center gap-1 text-xs text-slate-400">
+                <Target className="w-3 h-3" />
+                Revisit by {fmtDate(d.deadline)}
+              </span>
+            )}
+          </div>
           <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-400 transition-colors" />
         </div>
       </div>
@@ -90,7 +102,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
   const successRate = resolved.length ? `${Math.round((metCount / resolved.length) * 100)}%` : '—'
 
   const upcoming = active
-    .filter(d => d.deadline)
+    .filter(d => d.deadline && fmtDate(d.deadline) !== null)
     .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
     .slice(0, 3)
 
@@ -188,7 +200,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
                   >
                     <p className="text-xs font-medium text-slate-800 group-hover:text-indigo-600 truncate">{d.title}</p>
                     <p className="text-xs text-slate-400">
-                      {new Date(d.deadline!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {fmtDate(d.deadline!)}
                     </p>
                   </button>
                 ))}
