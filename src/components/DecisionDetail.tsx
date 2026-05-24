@@ -265,62 +265,62 @@ export default function DecisionDetail({ decision, onBack, onAddUpdate, onUpdate
 
               {/* ── OUTCOME sub-section ── */}
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Outcome</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Outcome — what the world delivered</p>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Actual Outcome</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">What Happened</p>
                     <p className="text-sm text-slate-700">{decision.resolution.actualOutcome}</p>
                     <p className="text-xs text-slate-400 mt-1.5">
                       Resolved {formatDate(decision.resolution.date)}
                     </p>
                   </div>
 
-                  {/* Success criteria badge */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Success Criteria</p>
-                    {decision.resolution.successCriteriaResult === 'met' && (
-                      <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700">
-                        ✓ Success Criteria Met
-                      </span>
-                    )}
-                    {decision.resolution.successCriteriaResult === 'partial' && (
-                      <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
-                        ◑ Partially Met
-                      </span>
-                    )}
-                    {decision.resolution.successCriteriaResult === 'missed' && (
-                      <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700">
-                        ✗ Criteria Missed
-                      </span>
-                    )}
-                  </div>
+                  {/* Forecast accuracies */}
+                  {decision.resolution.forecastAccuracies.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Predictions vs Reality</p>
+                      <div className="space-y-2">
+                        {decision.resolution.forecastAccuracies.map((fa, i) => (
+                          <div key={i} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-slate-100">
+                            <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
+                              fa.wasCorrect ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                              {fa.wasCorrect ? '✓' : '✗'}
+                            </span>
+                            <p className="text-xs text-slate-700 flex-1">{fa.description}</p>
+                            <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{fa.probability}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* ── PROCESS sub-section ── */}
-              {(decision.resolution.forecastAccuracies.length > 0 || decision.resolution.lessonsLearned) && (
+              {(decision.resolution.successCriteriaResult || decision.resolution.lessonsLearned) && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-2">Process</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-2">Process — did your reasoning hold up</p>
                   <div className="space-y-3">
-                    {/* Forecast accuracies */}
-                    {decision.resolution.forecastAccuracies.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Forecast Results</p>
-                        <div className="space-y-2">
-                          {decision.resolution.forecastAccuracies.map((fa, i) => (
-                            <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-100">
-                              <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
-                                fa.wasCorrect ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                              }`}>
-                                {fa.wasCorrect ? '✓' : '✗'}
-                              </span>
-                              <p className="text-xs text-slate-700 flex-1">{fa.description}</p>
-                              <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{fa.probability}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {/* Success criteria result */}
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Decision Intent</p>
+                      {decision.resolution.successCriteriaResult === 'met' && (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700">
+                          ✓ Achieved what you set out to do
+                        </span>
+                      )}
+                      {decision.resolution.successCriteriaResult === 'partial' && (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                          ◑ Partially achieved your intent
+                        </span>
+                      )}
+                      {decision.resolution.successCriteriaResult === 'missed' && (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700">
+                          ✗ Did not achieve your intent
+                        </span>
+                      )}
+                    </div>
 
                     {decision.resolution.lessonsLearned && (
                       <div>

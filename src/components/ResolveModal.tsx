@@ -83,8 +83,8 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
             </div>
             <p className="text-xs text-slate-400 mb-4">What the world delivered — influenced by luck and factors outside your control.</p>
 
-            {/* What actually happened */}
             <div className="space-y-4">
+              {/* What actually happened */}
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   What actually happened? <span className="text-red-400">*</span>
@@ -99,14 +99,71 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
                 />
               </div>
 
+              {/* Forecast accuracy */}
+              {decision.forecasts.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Did your predictions come true? <span className="text-slate-400 font-normal">(optional)</span>
+                  </label>
+                  <p className="text-xs text-slate-400 mb-2">Record what factually happened — separate from whether it was the right call.</p>
+                  <div className="space-y-3">
+                    {decision.forecasts.map((f, i) => (
+                      <div key={f.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="text-xs text-slate-700 flex-1">{f.description}</p>
+                          <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{f.probability}%</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setForecastAnswer(i, true)}
+                            className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                              forecastAnswers[i] === true
+                                ? 'bg-green-50 border-green-400 text-green-700'
+                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                            }`}
+                          >
+                            Yes, it happened
+                          </button>
+                          <button
+                            onClick={() => setForecastAnswer(i, false)}
+                            className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                              forecastAnswers[i] === false
+                                ? 'bg-red-50 border-red-400 text-red-700'
+                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                            }`}
+                          >
+                            No, it didn't
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-slate-100" />
+
+          {/* ── PROCESS REVIEW section ── */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-100 text-indigo-600">
+                Process Review
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">Did your decision logic hold up? This is what you can actually improve next time.</p>
+
+            <div className="space-y-4">
               {/* Success criteria */}
               {decision.successCriteria && (
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Did you meet your success criteria? <span className="text-red-400">*</span>
+                    Did your decision achieve what you intended? <span className="text-red-400">*</span>
                   </label>
-                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 mb-3 text-xs text-slate-600">
-                    <span className="font-semibold text-slate-500 uppercase tracking-wide text-[10px]">Success criteria: </span>
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-3 text-xs text-slate-600">
+                    <span className="font-semibold text-indigo-500 uppercase tracking-wide text-[10px]">Your success criteria: </span>
                     {decision.successCriteria}
                   </div>
                   <div className="flex gap-2">
@@ -128,62 +185,6 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-slate-100" />
-
-          {/* ── PROCESS REVIEW section ── */}
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-100 text-indigo-600">
-                Process Review
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 mb-4">How well did you think through the decision? This is what you can actually improve.</p>
-
-            <div className="space-y-4">
-              {/* Forecast accuracy */}
-              {decision.forecasts.length > 0 && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-2">
-                    How did your forecasts play out? <span className="text-slate-400 font-normal">(optional)</span>
-                  </label>
-                  <div className="space-y-3">
-                    {decision.forecasts.map((f, i) => (
-                      <div key={f.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="text-xs text-slate-700 flex-1">{f.description}</p>
-                          <span className="text-xs font-bold text-indigo-700 flex-shrink-0">{f.probability}%</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setForecastAnswer(i, true)}
-                            className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                              forecastAnswers[i] === true
-                                ? 'bg-green-50 border-green-400 text-green-700'
-                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                            }`}
-                          >
-                            Yes
-                          </button>
-                          <button
-                            onClick={() => setForecastAnswer(i, false)}
-                            className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                              forecastAnswers[i] === false
-                                ? 'bg-red-50 border-red-400 text-red-700'
-                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                            }`}
-                          >
-                            No
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Lessons learned */}
               <div>
@@ -193,7 +194,7 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
                   onChange={e => setLessonsLearned(e.target.value)}
                   rows={3}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  placeholder="What would you do differently? What surprised you? What confirmed your model?"
+                  placeholder="What would you reason differently next time? What assumption was wrong? What confirmed your model?"
                 />
               </div>
             </div>
