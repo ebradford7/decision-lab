@@ -174,12 +174,6 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
           {active.length === 0 ? (
             <div className="bg-white rounded-xl border border-dashed border-slate-200 p-8 text-center">
               <p className="text-sm text-slate-400">No active decisions yet.</p>
-              <button
-                onClick={onNew}
-                className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                Make your first decision →
-              </button>
             </div>
           ) : (
             <div className="space-y-3">
