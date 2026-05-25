@@ -55,9 +55,9 @@ export default function AuthGate() {
             </div>
           ) : (
             <>
-              <h2 className="font-semibold text-slate-900 mb-1">Sign in</h2>
+              <h2 className="font-semibold text-slate-900 mb-1">Sign in or create an account</h2>
               <p className="text-sm text-slate-500 mb-4">
-                Enter your email and we'll send you a magic link. No password required.
+                Enter your email and we'll send you a magic link. No password required — new users are created automatically.
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-3">
