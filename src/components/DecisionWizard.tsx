@@ -195,7 +195,7 @@ export default function DecisionWizard({ onSave, onCancel }: Props) {
           <ChevronLeft className="w-3.5 h-3.5" /> Back
         </button>
         <h1 className="text-xl font-bold text-slate-900">New Decision</h1>
-        <p className="text-sm text-slate-500 mt-1">Work through this carefully — decision quality starts with the process.</p>
+        <p className="text-sm text-slate-500 mt-1">Work through this carefully — judgment quality starts here.</p>
       </div>
 
       <div className="mb-8 flex justify-center">

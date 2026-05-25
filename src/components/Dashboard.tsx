@@ -118,7 +118,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Your decision quality at a glance</p>
+          <p className="text-sm text-slate-500 mt-0.5">Your judgment quality at a glance</p>
         </div>
         <button
           onClick={onNew}
