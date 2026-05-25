@@ -1,8 +1,30 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { v4 as uuid } from 'uuid'
-import { ChevronLeft, Send, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, Send, CheckCircle2, Mic, MicOff } from 'lucide-react'
 import { Decision, DecisionValue, Forecast } from '../types'
 import { sendMessage, extractJson } from '../lib/claude'
+
+// ── Web Speech API types ──────────────────────────────────────────────────────
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList
+  resultIndex: number
+}
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  start(): void
+  stop(): void
+  onresult: ((e: SpeechRecognitionEvent) => void) | null
+  onerror: ((e: Event) => void) | null
+  onend: (() => void) | null
+}
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance
+  }
+}
 
 interface Props {
   onSave: (d: Decision) => void
@@ -198,6 +220,60 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
   const sessionStartRef = useRef<number>(Date.now())
   const accumulatedSecondsRef = useRef<number>(draft?.accumulatedSeconds ?? 0)
 
+  // ── Voice input ──────────────────────────────────────────────────────────────
+  const [isListening, setIsListening] = useState(false)
+  const [voiceSupported] = useState(() =>
+    typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+  )
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
+  const interimRef = useRef('')  // tracks interim transcript so we can replace it
+
+  const startListening = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) return
+    const rec = new SR()
+    rec.continuous = true
+    rec.interimResults = true
+    rec.lang = 'en-US'
+    recognitionRef.current = rec
+    interimRef.current = ''
+
+    rec.onresult = (e: SpeechRecognitionEvent) => {
+      let interim = ''
+      let final = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript
+        if (e.results[i].isFinal) final += t
+        else interim += t
+      }
+      setInput(prev => {
+        // Strip the previous interim chunk, append new final + new interim
+        const base = prev.endsWith(interimRef.current)
+          ? prev.slice(0, prev.length - interimRef.current.length)
+          : prev
+        interimRef.current = interim
+        return (base + final + interim).trimStart()
+      })
+    }
+
+    rec.onerror = () => setIsListening(false)
+    rec.onend = () => setIsListening(false)
+
+    rec.start()
+    setIsListening(true)
+  }, [])
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop()
+    interimRef.current = ''
+    setIsListening(false)
+  }, [])
+
+  const toggleVoice = useCallback(() => {
+    if (isListening) stopListening()
+    else startListening()
+  }, [isListening, startListening, stopListening])
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
@@ -292,7 +368,9 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
   const handleSend = () => {
     const trimmed = input.trim()
     if (!trimmed || isLoading) return
+    if (isListening) stopListening()
     setInput('')
+    interimRef.current = ''
     callClaude(trimmed, messages)
   }
 
@@ -424,17 +502,50 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
           {/* Input */}
           <div className="flex-shrink-0 border-t border-slate-200 bg-white px-4 py-3">
             <div className="flex gap-2 items-end">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isLoading}
-                rows={1}
-                placeholder="Type your message… (Enter to send, Shift+Enter for newline)"
-                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400 max-h-32 overflow-y-auto"
-                style={{ minHeight: '42px' }}
-              />
+              <div className="relative flex-1">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isLoading}
+                  rows={1}
+                  placeholder={isListening ? 'Listening… speak now' : 'Type your message… (Enter to send, Shift+Enter for newline)'}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400 max-h-32 overflow-y-auto transition-colors ${
+                    isListening
+                      ? 'border-red-300 bg-red-50 focus:ring-red-400'
+                      : 'border-slate-200'
+                  }`}
+                  style={{ minHeight: '42px' }}
+                />
+                {isListening && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-0.5 items-center">
+                    {[0, 1, 2].map(i => (
+                      <span
+                        key={i}
+                        className="w-0.5 rounded-full bg-red-400 animate-pulse"
+                        style={{ height: '12px', animationDelay: `${i * 150}ms` }}
+                      />
+                    ))}
+                  </span>
+                )}
+              </div>
+
+              {voiceSupported && (
+                <button
+                  onClick={toggleVoice}
+                  disabled={isLoading}
+                  title={isListening ? 'Stop recording' : 'Speak your message'}
+                  className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
+                    isListening
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'border border-slate-200 hover:border-indigo-300 text-slate-400 hover:text-indigo-600'
+                  }`}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              )}
+
               <button
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
