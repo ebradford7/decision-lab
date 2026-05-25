@@ -226,34 +226,27 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
     typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
   )
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
-  const interimRef = useRef('')  // tracks interim transcript so we can replace it
 
   const startListening = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return
     const rec = new SR()
-    rec.continuous = true
-    rec.interimResults = true
+    rec.continuous = false      // stop automatically after the user pauses
+    rec.interimResults = false  // only fire on confirmed final transcripts
     rec.lang = 'en-US'
     recognitionRef.current = rec
-    interimRef.current = ''
 
     rec.onresult = (e: SpeechRecognitionEvent) => {
-      let interim = ''
-      let final = ''
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript
-        if (e.results[i].isFinal) final += t
-        else interim += t
+      const transcript = Array.from({ length: e.results.length })
+        .map((_, i) => e.results[i][0].transcript)
+        .join(' ')
+        .trim()
+      if (transcript) {
+        setInput(prev => {
+          const base = prev.trim()
+          return base ? `${base} ${transcript}` : transcript
+        })
       }
-      setInput(prev => {
-        // Strip the previous interim chunk, append new final + new interim
-        const base = prev.endsWith(interimRef.current)
-          ? prev.slice(0, prev.length - interimRef.current.length)
-          : prev
-        interimRef.current = interim
-        return (base + final + interim).trimStart()
-      })
     }
 
     rec.onerror = () => setIsListening(false)
@@ -265,7 +258,6 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop()
-    interimRef.current = ''
     setIsListening(false)
   }, [])
 
@@ -370,7 +362,6 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
     if (!trimmed || isLoading) return
     if (isListening) stopListening()
     setInput('')
-    interimRef.current = ''
     callClaude(trimmed, messages)
   }
 
