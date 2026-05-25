@@ -71,17 +71,18 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
         <div className="p-5 space-y-6">
           {/* Framing note */}
           <p className="text-xs text-slate-400 italic">
-            Outcome and process are scored separately — because luck is real.
+            Results and judgment are scored separately — because luck is real.
           </p>
 
           {/* ── OUTCOME section ── */}
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-500">
-                Outcome
+                Results
               </span>
             </div>
             <p className="text-xs text-slate-400 mb-4">What the world delivered — influenced by luck and factors outside your control.</p>
+
 
             <div className="space-y-4">
               {/* What actually happened */}
@@ -150,10 +151,10 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-100 text-indigo-600">
-                Process Review
+                Judgment Quality
               </span>
             </div>
-            <p className="text-xs text-slate-400 mb-4">Did your decision logic hold up? This is what you can actually improve next time.</p>
+            <p className="text-xs text-slate-400 mb-4">How well did you reason and choose? This is what you can actually improve.</p>
 
             <div className="space-y-4">
               {/* Success criteria */}

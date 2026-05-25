@@ -265,7 +265,7 @@ export default function DecisionDetail({ decision, onBack, onAddUpdate, onUpdate
 
               {/* ── OUTCOME sub-section ── */}
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Outcome — what the world delivered</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Results — what the world delivered</p>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">What Happened</p>
@@ -300,7 +300,7 @@ export default function DecisionDetail({ decision, onBack, onAddUpdate, onUpdate
               {/* ── PROCESS sub-section ── */}
               {(decision.resolution.successCriteriaResult || decision.resolution.lessonsLearned) && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-2">Process — did your reasoning hold up</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-2">Judgment Quality — did your reasoning hold up</p>
                   <div className="space-y-3">
                     {/* Success criteria result */}
                     <div>
