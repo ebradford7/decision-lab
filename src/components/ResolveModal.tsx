@@ -71,7 +71,7 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
         <div className="p-5 space-y-6">
           {/* Framing note */}
           <p className="text-xs text-slate-400 italic">
-            Results and judgment are scored separately — because luck is real.
+            Decision quality and results are scored separately — because luck is real.
           </p>
 
           {/* ── OUTCOME section ── */}
@@ -151,7 +151,7 @@ export default function ResolveModal({ decision, onSave, onClose }: Props) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-indigo-100 text-indigo-600">
-                Judgment Quality
+                Decision Quality
               </span>
             </div>
             <p className="text-xs text-slate-400 mb-4">How well did you reason and choose? This is what you can actually improve.</p>

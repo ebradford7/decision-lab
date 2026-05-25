@@ -89,14 +89,14 @@ export default function CalibrationView({ decisions }: Props) {
 
       {/* Framing callout */}
       <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6">
-        <p className="text-sm text-indigo-800 font-medium">Good judgment with a bad result is still good judgment.</p>
-        <p className="text-xs text-indigo-600 mt-1">Focus on improving your reasoning — your Brier score reflects judgment quality, not luck.</p>
+        <p className="text-sm text-indigo-800 font-medium">Good decision quality with a bad result is still good decision-making.</p>
+        <p className="text-xs text-indigo-600 mt-1">Focus on improving your reasoning — your Brier score reflects decision quality, not luck.</p>
       </div>
 
       {/* Stats — two grouped cards */}
       <div className="grid md:grid-cols-2 gap-4 mb-8">
         <GroupCard
-          title="Judgment Quality"
+          title="Decision Quality"
           subtitle="How well you reasoned — the part you can improve"
           borderColor="border-l-indigo-400"
         >
@@ -311,7 +311,7 @@ export default function CalibrationView({ decisions }: Props) {
       <div className="mt-4 flex gap-2 bg-slate-50 border border-slate-200 rounded-xl p-4">
         <Info className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
         <div className="text-xs text-slate-500 space-y-0.5">
-          <p><strong className="text-slate-700">Brier Score</strong> measures forecast accuracy (lower = better) — it's a judgment quality metric, not a results metric.</p>
+          <p><strong className="text-slate-700">Brier Score</strong> measures forecast accuracy (lower = better) — it's a decision quality metric, not a results metric.</p>
           <p>0.00 = perfect · 0.10 = excellent · 0.25 = no-skill (always predict 50%) · 1.00 = worst possible</p>
           <p>A superforecaster typically achieves Brier scores below 0.15 on geopolitical questions. A good Brier score means you reasoned well — regardless of whether individual outcomes went your way.</p>
         </div>

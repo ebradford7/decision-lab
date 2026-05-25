@@ -118,7 +118,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Your judgment quality at a glance</p>
+          <p className="text-sm text-slate-500 mt-0.5">Your decision quality at a glance</p>
         </div>
         <button
           onClick={onNew}
@@ -151,7 +151,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
           sub={score !== null ? grade : 'need resolved decisions'}
           icon={TrendingUp}
           color="bg-indigo-50 text-indigo-600"
-          badge={{ text: 'Judgment', style: 'bg-indigo-100 text-indigo-600' }}
+          badge={{ text: 'Decision Quality', style: 'bg-indigo-100 text-indigo-600' }}
         />
         <StatCard
           label="Success Rate"
@@ -162,7 +162,7 @@ export default function Dashboard({ decisions, onNew, onView }: Props) {
           badge={{ text: 'Results', style: 'bg-slate-100 text-slate-500' }}
         />
       </div>
-      <p className="text-xs text-slate-400 mb-6 -mt-0">Judgment quality and results are tracked separately — good decisions can still have bad outcomes.</p>
+      <p className="text-xs text-slate-400 mb-6 -mt-0">Decision quality and results are tracked separately — good decisions can still have bad outcomes.</p>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Active decisions */}

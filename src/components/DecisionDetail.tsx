@@ -300,7 +300,7 @@ export default function DecisionDetail({ decision, onBack, onAddUpdate, onUpdate
               {/* ── PROCESS sub-section ── */}
               {(decision.resolution.successCriteriaResult || decision.resolution.lessonsLearned) && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-2">Judgment Quality — did your reasoning hold up</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 mb-2">Decision Quality — did your reasoning hold up</p>
                   <div className="space-y-3">
                     {/* Success criteria result */}
                     <div>
