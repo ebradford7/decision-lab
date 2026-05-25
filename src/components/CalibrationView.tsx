@@ -80,8 +80,8 @@ export default function CalibrationView({ decisions }: Props) {
     : '—'
   const overconfidenceSub = overconfidenceIndex === null ? undefined
     : Math.abs(overconfidenceIndex) <= 5 ? 'well calibrated'
-    : overconfidenceIndex > 0 ? `tends overconfident by ${Math.round(overconfidenceIndex)}%`
-    : `tends underconfident by ${Math.round(Math.abs(overconfidenceIndex))}%`
+    : overconfidenceIndex > 0 ? 'tends overconfident'
+    : 'tends underconfident'
   const overconfidenceColor = overconfidenceIndex === null || Math.abs(overconfidenceIndex) <= 5
     ? 'bg-green-50 border-green-100 text-green-900'
     : overconfidenceIndex > 0
