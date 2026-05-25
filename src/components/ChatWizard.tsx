@@ -266,6 +266,15 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
     else startListening()
   }, [isListening, startListening, stopListening])
 
+  // Recording timer
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  useEffect(() => {
+    if (!isListening) { setRecordingSeconds(0); return }
+    const id = setInterval(() => setRecordingSeconds(s => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [isListening])
+  const fmtRecording = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
@@ -510,14 +519,19 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
                   style={{ minHeight: '42px' }}
                 />
                 {isListening && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-0.5 items-center">
-                    {[0, 1, 2].map(i => (
-                      <span
-                        key={i}
-                        className="w-0.5 rounded-full bg-red-400 animate-pulse"
-                        style={{ height: '12px', animationDelay: `${i * 150}ms` }}
-                      />
-                    ))}
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                    <span className="flex gap-0.5 items-end">
+                      {[0, 1, 2].map(i => (
+                        <span
+                          key={i}
+                          className="w-0.5 rounded-full bg-red-400 animate-pulse"
+                          style={{ height: '12px', animationDelay: `${i * 150}ms` }}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-xs font-mono font-semibold text-red-500 tabular-nums">
+                      {fmtRecording(recordingSeconds)}
+                    </span>
                   </span>
                 )}
               </div>
