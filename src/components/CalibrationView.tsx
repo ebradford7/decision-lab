@@ -68,12 +68,25 @@ export default function CalibrationView({ decisions }: Props) {
   }))
   const filledCurve = curveData.filter(d => d.actual !== null)
 
-  // Forecast accuracy: % of entries that were correct
+  // Overconfidence index: avg predicted probability minus actual hit rate
+  // Positive = overconfident, negative = underconfident, ~0 = well-calibrated
   const correctEntries = allForecastEntries.filter(fa => fa.wasCorrect).length
-  const forecastAccuracyPct =
-    allForecastEntries.length > 0
-      ? Math.round((correctEntries / allForecastEntries.length) * 100)
-      : null
+  const overconfidenceIndex = allForecastEntries.length > 0
+    ? (allForecastEntries.reduce((sum, fa) => sum + fa.probability, 0) / allForecastEntries.length)
+      - (correctEntries / allForecastEntries.length) * 100
+    : null
+  const overconfidenceDisplay = overconfidenceIndex !== null
+    ? `${overconfidenceIndex > 0 ? '+' : ''}${Math.round(overconfidenceIndex)}%`
+    : '—'
+  const overconfidenceSub = overconfidenceIndex === null ? undefined
+    : Math.abs(overconfidenceIndex) <= 5 ? 'well calibrated'
+    : overconfidenceIndex > 0 ? `tends overconfident by ${Math.round(overconfidenceIndex)}%`
+    : `tends underconfident by ${Math.round(Math.abs(overconfidenceIndex))}%`
+  const overconfidenceColor = overconfidenceIndex === null || Math.abs(overconfidenceIndex) <= 5
+    ? 'bg-green-50 border-green-100 text-green-900'
+    : overconfidenceIndex > 0
+    ? 'bg-amber-50 border-amber-100 text-amber-900'
+    : 'bg-blue-50 border-blue-100 text-blue-900'
 
   // Success rate: % of resolved decisions where successCriteriaResult === 'met'
   const metCount = resolved.filter(d => d.resolution?.successCriteriaResult === 'met').length
@@ -107,10 +120,10 @@ export default function CalibrationView({ decisions }: Props) {
             color="bg-indigo-50 border-indigo-100 text-indigo-900"
           />
           <StatBox
-            label="Forecast Accuracy"
-            value={forecastAccuracyPct !== null ? `${forecastAccuracyPct}%` : '—'}
-            sub={allForecastEntries.length > 0 ? `${correctEntries}/${allForecastEntries.length} correct` : undefined}
-            color="bg-indigo-50 border-indigo-100 text-indigo-900"
+            label="Overconfidence"
+            value={overconfidenceDisplay}
+            sub={overconfidenceSub}
+            color={overconfidenceColor}
           />
         </GroupCard>
 
@@ -310,10 +323,9 @@ export default function CalibrationView({ decisions }: Props) {
       {/* Brier score explainer */}
       <div className="mt-4 flex gap-2 bg-slate-50 border border-slate-200 rounded-xl p-4">
         <Info className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-slate-500 space-y-0.5">
-          <p><strong className="text-slate-700">Brier Score</strong> measures forecast accuracy (lower = better) — it's a decision quality metric, not a results metric.</p>
-          <p>0.00 = perfect · 0.10 = excellent · 0.25 = no-skill (always predict 50%) · 1.00 = worst possible</p>
-          <p>A superforecaster typically achieves Brier scores below 0.15 on geopolitical questions. A good Brier score means you reasoned well — regardless of whether individual outcomes went your way.</p>
+        <div className="text-xs text-slate-500 space-y-1">
+          <p><strong className="text-slate-700">Brier Score</strong> measures forecast accuracy (lower = better). 0.00 = perfect · 0.10 = excellent · 0.25 = no-skill · 1.00 = worst possible.</p>
+          <p><strong className="text-slate-700">Overconfidence Index</strong> = avg predicted probability − actual hit rate. Positive means you tend to overestimate how likely things are; negative means you underestimate. Within ±5% is considered well-calibrated.</p>
         </div>
       </div>
     </div>
