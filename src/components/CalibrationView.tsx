@@ -102,7 +102,7 @@ export default function CalibrationView({ decisions }: Props) {
 
       {/* Framing callout */}
       <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6">
-        <p className="text-sm text-indigo-800 font-medium">Good decision quality with a bad result is still good decision-making.</p>
+        <p className="text-sm text-indigo-800 font-medium">Decision Quality + Luck = Result. You control one of those.</p>
         <p className="text-xs text-indigo-600 mt-1">Luck evens out over time — the people who consistently make good decisions are the ones who win in the long run. Focus on your process and the results will follow.</p>
       </div>
 
