@@ -225,30 +225,47 @@ async function searchManifold(query: string): Promise<ManifoldMarket[]> {
   return data.filter(m => typeof m.probability === 'number')
 }
 
-function MarketSearch({ onSelect }: { onSelect: (p: number, question: string) => void }) {
+function MarketSearch({ onSelect, autoQuery }: {
+  onSelect: (p: number, question: string) => void
+  autoQuery?: string
+}) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ManifoldMarket[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
+  const lastAutoQuery = useRef<string>('')
 
-  const handleSearch = async () => {
-    if (!query.trim()) return
+  const runSearch = useCallback(async (term: string) => {
+    if (!term.trim()) return
     setLoading(true)
     setError(null)
     setSearched(true)
     try {
-      const markets = await searchManifold(query.trim())
+      const markets = await searchManifold(term.trim())
       setResults(markets)
     } catch {
       setError('Could not reach Manifold Markets. Check your connection.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  // Auto-search when the extracted title changes
+  useEffect(() => {
+    if (!autoQuery || autoQuery === lastAutoQuery.current) return
+    lastAutoQuery.current = autoQuery
+    setQuery('')  // clear any manual query so placeholder shows auto term
+    runSearch(autoQuery)
+  }, [autoQuery, runSearch])
+
+  const handleSearch = () => runSearch(query)
 
   return (
     <div className="space-y-2">
+      {autoQuery && results.length > 0 && (
+        <p className="text-[10px] text-slate-400">Auto-matched from your decision topic. Search below to refine.</p>
+      )}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -257,7 +274,7 @@ function MarketSearch({ onSelect }: { onSelect: (p: number, question: string) =>
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Search prediction markets…"
+            placeholder={autoQuery ? `Searching: "${autoQuery}"` : 'Search prediction markets…'}
             className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
           />
         </div>
@@ -771,7 +788,7 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
               <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Prediction Markets</p>
             </div>
             <p className="text-[11px] text-slate-400 mb-3">Find a related market on Manifold to use as a base rate for your forecast.</p>
-            <MarketSearch onSelect={handleMarketSelect} />
+            <MarketSearch onSelect={handleMarketSelect} autoQuery={extracted.title} />
           </div>
 
           {/* Commitment */}
