@@ -29,7 +29,7 @@ export default function Layout({ current, onNav, children, userEmail, onSignOut 
             </div>
             <span className="font-semibold text-slate-900 text-sm tracking-tight">Decision Lab</span>
           </div>
-          <p className="text-xs text-slate-400 mt-1 leading-tight">Decide well. Track honestly.</p>
+          <p className="text-xs text-slate-400 mt-1 leading-tight">Separate luck from skill.</p>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5">
