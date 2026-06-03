@@ -206,23 +206,18 @@ function clearDraft() {
 
 // ── Prediction market search (Manifold Markets) ────────────────────────────────
 
-interface ManifoldMarket {
+interface PredictionMarket {
   id: string
   question: string
   probability: number
   url: string
   volume: number
-  closeTime?: number
 }
 
-async function searchManifold(query: string): Promise<ManifoldMarket[]> {
-  const res = await fetch(
-    `https://api.manifold.markets/v0/search-markets?term=${encodeURIComponent(query)}&limit=5&sort=liquidity`
-  )
-  if (!res.ok) throw new Error('Manifold API error')
-  const data = await res.json() as ManifoldMarket[]
-  // Only return binary markets with a valid probability
-  return data.filter(m => typeof m.probability === 'number')
+async function searchMarkets(query: string): Promise<PredictionMarket[]> {
+  const res = await fetch(`/api/markets?q=${encodeURIComponent(query)}`)
+  if (!res.ok) throw new Error('Markets API error')
+  return res.json() as Promise<PredictionMarket[]>
 }
 
 function MarketSearch({ onSelect, autoQuery }: {
@@ -230,7 +225,7 @@ function MarketSearch({ onSelect, autoQuery }: {
   autoQuery?: string
 }) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<ManifoldMarket[]>([])
+  const [results, setResults] = useState<PredictionMarket[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searched, setSearched] = useState(false)
@@ -242,10 +237,10 @@ function MarketSearch({ onSelect, autoQuery }: {
     setError(null)
     setSearched(true)
     try {
-      const markets = await searchManifold(term.trim())
+      const markets = await searchMarkets(term.trim())
       setResults(markets)
     } catch {
-      setError('Could not reach Manifold Markets. Check your connection.')
+      setError('Could not reach Polymarket. Check your connection.')
     } finally {
       setLoading(false)
     }
@@ -304,7 +299,10 @@ function MarketSearch({ onSelect, autoQuery }: {
                   <p className="text-xs text-slate-700 leading-snug line-clamp-2">{m.question}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-xs font-bold ${color}`}>{pct}%</span>
-                    <span className="text-[10px] text-slate-400">crowd probability</span>
+                    <span className="text-[10px] text-slate-400">on Polymarket</span>
+                    {m.volume > 0 && (
+                      <span className="text-[10px] text-slate-300">${m.volume.toLocaleString()} vol</span>
+                    )}
                     <a
                       href={m.url}
                       target="_blank"
@@ -787,7 +785,7 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
               <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
               <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Prediction Markets</p>
             </div>
-            <p className="text-[11px] text-slate-400 mb-3">Find a related market on Manifold to use as a base rate for your forecast.</p>
+            <p className="text-[11px] text-slate-400 mb-3">Live Polymarket odds — use as a base rate for your forecast.</p>
             <MarketSearch onSelect={handleMarketSelect} autoQuery={extracted.title} />
           </div>
 
