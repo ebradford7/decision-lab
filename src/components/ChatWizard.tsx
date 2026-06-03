@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { v4 as uuid } from 'uuid'
-import { ChevronLeft, Send, CheckCircle2, Mic, MicOff, Search, ExternalLink, TrendingUp } from 'lucide-react'
+import { ChevronLeft, Send, CheckCircle2, Mic, MicOff } from 'lucide-react'
 import { Decision, DecisionValue, Forecast } from '../types'
 import { sendMessage, extractJson } from '../lib/claude'
 
@@ -204,131 +204,6 @@ function clearDraft() {
   localStorage.removeItem(DRAFT_KEY)
 }
 
-// ── Prediction market search (Manifold Markets) ────────────────────────────────
-
-interface PredictionMarket {
-  id: string
-  question: string
-  probability: number
-  url: string
-  volume: number
-}
-
-async function searchMarkets(query: string): Promise<PredictionMarket[]> {
-  const res = await fetch(`/api/markets?q=${encodeURIComponent(query)}`)
-  if (!res.ok) throw new Error('Markets API error')
-  return res.json() as Promise<PredictionMarket[]>
-}
-
-function MarketSearch({ onSelect, autoQuery }: {
-  onSelect: (p: number, question: string) => void
-  autoQuery?: string
-}) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<PredictionMarket[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [searched, setSearched] = useState(false)
-  const lastAutoQuery = useRef<string>('')
-
-  const runSearch = useCallback(async (term: string) => {
-    if (!term.trim()) return
-    setLoading(true)
-    setError(null)
-    setSearched(true)
-    try {
-      const markets = await searchMarkets(term.trim())
-      setResults(markets)
-    } catch {
-      setError('Could not reach Polymarket. Check your connection.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Auto-search when the extracted title changes
-  useEffect(() => {
-    if (!autoQuery || autoQuery === lastAutoQuery.current) return
-    lastAutoQuery.current = autoQuery
-    setQuery('')  // clear any manual query so placeholder shows auto term
-    runSearch(autoQuery)
-  }, [autoQuery, runSearch])
-
-  const handleSearch = () => runSearch(query)
-
-  return (
-    <div className="space-y-2">
-      {autoQuery && results.length > 0 && (
-        <p className="text-[10px] text-slate-400">Auto-matched from your decision topic. Search below to refine.</p>
-      )}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder={autoQuery ? `Searching: "${autoQuery}"` : 'Search prediction markets…'}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-          />
-        </div>
-        <button
-          onClick={handleSearch}
-          disabled={loading || !query.trim()}
-          className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-lg transition-colors"
-        >
-          {loading ? '…' : 'Search'}
-        </button>
-      </div>
-
-      {error && <p className="text-xs text-red-500">{error}</p>}
-
-      {searched && !loading && results.length === 0 && !error && (
-        <p className="text-xs text-slate-400">No markets found — try a broader search term.</p>
-      )}
-
-      {results.length > 0 && (
-        <div className="space-y-1.5">
-          {results.map(m => {
-            const pct = Math.round(m.probability * 100)
-            const color = pct >= 65 ? 'text-green-600' : pct <= 35 ? 'text-red-600' : 'text-amber-600'
-            return (
-              <div key={m.id} className="bg-white border border-slate-200 rounded-lg p-2.5 flex items-start gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-700 leading-snug line-clamp-2">{m.question}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs font-bold ${color}`}>{pct}%</span>
-                    <span className="text-[10px] text-slate-400">on Polymarket</span>
-                    {m.volume > 0 && (
-                      <span className="text-[10px] text-slate-300">${m.volume.toLocaleString()} vol</span>
-                    )}
-                    <a
-                      href={m.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="ml-auto text-slate-300 hover:text-indigo-400"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-                <button
-                  onClick={() => onSelect(pct, m.question)}
-                  className="flex-shrink-0 text-[10px] font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded-md transition-colors"
-                >
-                  Use {pct}%
-                </button>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function ChatWizard({ onSave, onCancel }: Props) {
@@ -497,11 +372,6 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
     if (isListening) stopListening()
     setInput('')
     callClaude(trimmed, messages)
-  }
-
-  const handleMarketSelect = (probability: number, question: string) => {
-    const msg = `I found a related prediction market: "${question}" — the crowd puts it at ${probability}%. I'll use that as a reference point for my forecast.`
-    callClaude(msg, messages)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -777,16 +647,6 @@ export default function ChatWizard({ onSave, onCancel }: Props) {
             ) : (
               <EmptyState label="Probability forecasts will appear here…" />
             )}
-          </div>
-
-          {/* Prediction Markets */}
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
-              <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Prediction Markets</p>
-            </div>
-            <p className="text-[11px] text-slate-400 mb-3">Live Polymarket odds — use as a base rate for your forecast.</p>
-            <MarketSearch onSelect={handleMarketSelect} autoQuery={extracted.title} />
           </div>
 
           {/* Commitment */}
